@@ -16,7 +16,10 @@ skills = [
     "python", "java", "sql", "html", "css",
     "javascript", "react", "flask", "django",
     "machine learning", "data analysis",
-    "c++", "c", "excel", "git", "nlp"
+    "c++", "c", "excel", "git", "nlp",
+    "spring boot", "aws", "docker",
+    "rest apis", "microservices", "dbms",
+    "oops", "dsa", "github", "api"
 ]
 
 def find_skills(text):
@@ -99,8 +102,7 @@ if st.button("Analyze Resume"):
             )
 
             st.subheader("Matched Skills")
-            st.text(", ".join(matched)
-    if matched else "No matching skills found."
-)
+            st.text(", ".join(matched) if matched else "No matching skills found.")
 
- 
+            st.subheader("Missing Skills")
+            st.text(", ".join(missing) if missing else "No missing skills found.")
