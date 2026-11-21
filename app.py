@@ -2,16 +2,59 @@ from reportlab.pdfgen import canvas
 import streamlit as st
 from pypdf import PdfReader
 import re
-
+import io
 st.set_page_config(page_title="AI Resume Screening", page_icon="📄")
+st.markdown("""
+<style>
+.stApp {
+    background-color: #f4f7fc;
+}
 
-st.title("AI-Based Resume Screening System")
-st.write("Upload your resume and compare it with job requirements.")
+.block-container {
+    max-width: 900px;
+    padding-top: 2rem;
+}
 
-resume = st.file_uploader("Upload Resume (PDF)", type=["pdf"])
+h1 {
+    color: #17365d;
+    font-weight: 750;
+}
 
-job_description = st.text_area("Enter Job Description")
+.stButton > button {
+    background-color: #2563eb;
+    color: white;
+    border-radius: 10px;
+    border: none;
+    padding: 10px 24px;
+    font-weight: bold;
+}
 
+.stButton > button:hover {
+    background-color: #1746a2;
+    color: white;
+}
+</style>
+""", unsafe_allow_html=True)
+
+st.title("AI Resume Screening & Job Matching")
+st.write("Smart Resume Analysis | Skill Matching | Career Insights")
+
+st.divider()
+
+st.subheader("📄 Upload Your Resume")
+resume = st.file_uploader(
+    "Choose your resume",
+    type=["pdf"],
+    help="Upload your resume in PDF format."
+)
+
+st.subheader("📋 Enter Job Description")
+
+job_description = st.text_area(
+    "Paste the job requirements here",
+    height=180,
+    placeholder="Example: Python, Java, SQL, HTML, CSS, React..."
+)
 skills = [
     "python", "java", "sql", "html", "css",
     "javascript", "react", "flask", "django",
@@ -33,8 +76,9 @@ def find_skills(text):
 
     return found
 
+st.divider()
 
-if st.button("Analyze Resume"):
+if st.button("🔍 Analyze Resume"):
 
     if resume is None:
         st.error("Please upload a PDF resume.")
@@ -52,57 +96,40 @@ if st.button("Analyze Resume"):
         resume_skills = find_skills(resume_text)
         required_skills = find_skills(job_description)
 
-        st.subheader("Analysis Results")
-
+        st.divider()
+        st.header("📊 Resume Analysis Results")
         if not required_skills:
             st.warning("No recognized skills found in job description.")
 
         else:
             matched = [skill for skill in required_skills if skill in resume_skills]
-
-            missing = [ skill for skill in required_skills if skill not in resume_skills]
-
-            percentage = (
-                len(matched) / len(required_skills)
-            ) * 100
-
+            missing = [skill for skill in required_skills if skill not in resume_skills]
+            percentage = (len(matched) / len(required_skills)) * 100
             st.metric("Resume Matching Percentage", f"{percentage:.2f}%")
-
             st.progress(percentage / 100)
-            import io
 
-            pdf_buffer = io.BytesIO()
+            st.divider()
 
-            pdf = canvas.Canvas(pdf_buffer)
+            st.subheader("✅ Matched Skills")
+            st.write(", ".join(matched) if matched else "No matching skills found.")
 
-            pdf.drawString(100, 800, "AI Resume Screening Report")
-            pdf.drawString(100, 760, f"Matching Score: {percentage:.2f}%")
-            pdf.drawString(100, 720, "Matched Skills:")
+            st.subheader("❌ Missing Skills")
+            st.write(", ".join(missing) if missing else "No missing skills found.")
 
-            y = 690
-            for skill in matched:
-                pdf.drawString(120, y, skill)
-                y -= 25
+            buffer = io.BytesIO()
+            pdf = canvas.Canvas(buffer)
 
-            y -= 15
-            pdf.drawString(100, y, "Missing Skills:")
-
-            y -= 30
-            for skill in missing:
-                pdf.drawString(120, y, skill)
-                y -= 25
+            pdf.drawString(50, 800, "AI Resume Screening Report")
+            pdf.drawString(50, 770, f"Matching Percentage: {percentage:.2f}%")
+            pdf.drawString(50, 730, "Matched Skills: " + ", ".join(matched))
+            pdf.drawString(50, 690, "Missing Skills: " + ", ".join(missing))
 
             pdf.save()
+            buffer.seek(0)
 
             st.download_button(
-                label="Download PDF Report",
-                data=pdf_buffer.getvalue(),
+                label="📥 Download PDF Report",
+                data=buffer,
                 file_name="Resume_Analysis_Report.pdf",
                 mime="application/pdf"
             )
-
-            st.subheader("Matched Skills")
-            st.text(", ".join(matched) if matched else "No matching skills found.")
-
-            st.subheader("Missing Skills")
-            st.text(", ".join(missing) if missing else "No missing skills found.")
